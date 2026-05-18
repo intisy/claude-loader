@@ -1,0 +1,30 @@
+{
+  "name": "claude-hub",
+  "version": "1.0.0",
+  "description": "Session launcher, project switcher, and plugin manager for Claude Code",
+  "type": "module",
+  "license": "MIT",
+  "author": "intisy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/intisy/claude-hub.git"
+  },
+  "homepage": "https://github.com/intisy/claude-hub#readme",
+  "keywords": [
+    "claude-code",
+    "launcher",
+    "tui",
+    "project-switcher",
+    "plugin"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    ".claude-plugin/",
+    "hooks/",
+    "commands/",
+    "scripts/",
+    "README.md"
+  ]
+}

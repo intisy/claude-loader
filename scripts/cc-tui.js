@@ -6,8 +6,8 @@ import { join, dirname } from "path";
 import { homedir } from "os";
 
 var HOME = homedir();
-var CONFIG_DIR = join(HOME, ".config", "opencode");
-var DB_PATH = join(HOME, ".local", "share", "opencode", "opencode.db");
+var CONFIG_DIR = join(HOME, ".config", "claude");
+var DB_PATH = join(HOME, ".local", "share", "claude", "claude.db");
 var CONFIG_FOLDER = join(CONFIG_DIR, "config");
 var CACHE_DIR = join(CONFIG_DIR, "cache");
 var CONFIG_PATH = join(CONFIG_FOLDER, "oc-config.json");
@@ -21,7 +21,7 @@ var PLUGINS_DIR = join(CONFIG_DIR, "plugin");
 // ---------------------------------------------------------------------------
 
 function loadNpmPlugins() {
-  var ocPath = join(CONFIG_DIR, "opencode.json");
+  var ocPath = join(CONFIG_DIR, "claude.json");
   if (!existsSync(ocPath)) return [];
   try {
     var raw = readFileSync(ocPath, "utf-8");
@@ -34,8 +34,8 @@ function loadNpmPlugins() {
         var name = p.replace(/@[^@\/]+$/, "") || p;
         var version = "";
         try {
-          // OpenCode installs npm plugins into ~/.cache/opencode/node_modules
-          var cachePkg = join(homedir(), ".cache", "opencode", "node_modules", name, "package.json");
+          // Claude Code installs npm plugins into ~/.cache/claude/node_modules
+          var cachePkg = join(homedir(), ".cache", "claude", "node_modules", name, "package.json");
           // Fallback: config-local node_modules, then global npm, then local repos
           var globalNpm = process.platform === "win32"
             ? join(homedir(), "AppData", "Roaming", "npm", "node_modules")
@@ -79,7 +79,7 @@ function migrateConfigs() {
 migrateConfigs();
 
 // ---------------------------------------------------------------------------
-// Auto-update OpenCode itself
+// Auto-update Claude Code itself
 // ---------------------------------------------------------------------------
 
 function checkForUpdates() {
@@ -99,13 +99,13 @@ function checkForUpdates() {
     if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true });
     writeFileSync(UPDATE_CHECK_PATH, String(Date.now()));
 
-    var installed = execSync("opencode --version", { encoding: "utf-8", timeout: 10000 }).trim();
-    var latest = execSync("npm view opencode-ai version", { encoding: "utf-8", timeout: 15000 }).trim();
+    var installed = execSync("claude --version", { encoding: "utf-8", timeout: 10000 }).trim();
+    var latest = execSync("npm view claude-ai version", { encoding: "utf-8", timeout: 15000 }).trim();
 
     if (!latest || !installed || latest === installed) return;
 
-    process.stderr.write("\x1b[33m  > Updating OpenCode: " + installed + " -> " + latest + "\x1b[0m\n");
-    execSync("npm install -g opencode-ai@latest", { stdio: "inherit", timeout: 120000 });
+    process.stderr.write("\x1b[33m  > Updating Claude Code: " + installed + " -> " + latest + "\x1b[0m\n");
+    execSync("npm install -g claude-ai@latest", { stdio: "inherit", timeout: 120000 });
     process.stderr.write("\x1b[32m  > Updated to " + latest + "\x1b[0m\n\n");
   } catch (e) {}
 }
@@ -435,7 +435,7 @@ function flash(msg) {
 
 function getActions(item) {
   var a = [
-    { key: "open", label: "Open in OpenCode", icon: ">" },
+    { key: "open", label: "Open in Claude Code", icon: ">" },
   ];
   if (item.pinned) {
     a.push({ key: "unpin", label: "Unpin from favorites", icon: "x" });
@@ -555,7 +555,7 @@ function changeProjectPath(oldDir, newDir) {
       }
       try {
         var gitDir = join(newDir, ".git");
-        if (existsSync(gitDir)) writeFileSync(join(gitDir, "opencode"), newPid);
+        if (existsSync(gitDir)) writeFileSync(join(gitDir, "claude"), newPid);
       } catch (e) {}
     } else {
       db.run("UPDATE session SET project_id = 'global', directory = ? WHERE directory = ?", [newDir, oldDir]);
@@ -622,7 +622,7 @@ function buildProjects(pushBody, pushFoot, cols, barW) {
 
   if (items.length === 0) {
     pushBody("  " + GRAY + "No projects found." + RST, false);
-    pushBody("  " + GRAY + "Use OpenCode in a directory first, then come back." + RST, false);
+    pushBody("  " + GRAY + "Use Claude Code in a directory first, then come back." + RST, false);
     pushBody("", false);
     
     pushFoot("  " + GRAY + "-".repeat(barW) + RST);
@@ -694,7 +694,7 @@ function buildPluginItem(pushBody, i, pitem, nameW, cols, isSelected) {
     var nvstr = pitem.version ? (GRAY + "v" + pitem.version + RST) : (GRAY + "not installed" + RST);
     pushBody("  " + bg + arrow + nameStyle + pad(trunc(pitem.name, nameW), nameW) + RST + bg + " " + CYAN + "npm" + RST + "  " + nvstr + RST, isSelected);
     if (sel) {
-      var subInfo = GRAY + "     managed via npm (opencode.json)" + RST;
+      var subInfo = GRAY + "     managed via npm (claude.json)" + RST;
       pushBody("  " + subInfo, isSelected);
     }
     return;
@@ -773,7 +773,7 @@ function buildPlugins(pushBody, pushFoot, cols, barW) {
 
   if (pluginItems.length === 0) {
     pushBody("  " + GRAY + "No plugins configured." + RST, false);
-    pushBody("  " + GRAY + "Add plugins to ~/.config/opencode/config/plugins.json" + RST, false);
+    pushBody("  " + GRAY + "Add plugins to ~/.config/claude/config/plugins.json" + RST, false);
     pushBody("", false);
     
     pushFoot("  " + GRAY + "-".repeat(barW) + RST);
@@ -857,7 +857,7 @@ function render() {
 
   // 1. Build Header
   pushHead("");
-  pushHead("  " + BOLD + CYAN + " OpenCode" + RST + GRAY + "  Launcher" + RST);
+  pushHead("  " + BOLD + CYAN + " Claude Code" + RST + GRAY + "  Launcher" + RST);
   pushHead("  " + GRAY + "-".repeat(barW) + RST);
   var showPluginsTab = pluginItems.length > 0;
   var projTab = page === "projects" ? (BOLD + WHITE + BG_SEL + " Projects " + RST) : (GRAY + " Projects " + RST);
@@ -1010,7 +1010,7 @@ function handlePluginKey(key) {
         }
         pluginItems = buildCombinedPluginList();
         if (pcursor >= pluginItems.length) pcursor = Math.max(0, pluginItems.length - 1);
-        flash(errors.length > 0 ? errors.join("; ") : toUpdate.length + " plugin(s) updated. Restart OpenCode to apply.");
+        flash(errors.length > 0 ? errors.join("; ") : toUpdate.length + " plugin(s) updated. Restart Claude Code to apply.");
       }
     }
     else if (key === "u") {
@@ -1021,7 +1021,7 @@ function handlePluginKey(key) {
         var err = runPluginUpdate(p);
         pluginItems = buildCombinedPluginList();
         if (pcursor >= pluginItems.length) pcursor = Math.max(0, pluginItems.length - 1);
-        flash(err ? p.name + ": " + err : p.name + " updated. Restart OpenCode to apply.");
+        flash(err ? p.name + ": " + err : p.name + " updated. Restart Claude Code to apply.");
       }
     }
     else if (key === "d") {
@@ -1034,7 +1034,7 @@ function handlePluginKey(key) {
         if (existsSync(deployedPath)) { try { unlinkSync(deployedPath); } catch {} }
         pluginItems = buildCombinedPluginList();
         if (pcursor >= pluginItems.length) pcursor = Math.max(0, pluginItems.length - 1);
-        flash(p.name + " disabled. Restart OpenCode to unload.");
+        flash(p.name + " disabled. Restart Claude Code to unload.");
       }
     }
     else if (key === "q" || key === "escape") { cleanup(); process.exit(1); }
@@ -1051,7 +1051,7 @@ function handlePluginKey(key) {
         var err = runPluginUpdate(pitem);
         pluginItems = buildCombinedPluginList();
         if (pcursor >= pluginItems.length) pcursor = Math.max(0, pluginItems.length - 1);
-        flash(err ? pitem.name + ": " + err : pitem.name + " updated. Restart OpenCode to apply.");
+        flash(err ? pitem.name + ": " + err : pitem.name + " updated. Restart Claude Code to apply.");
         mode = "list";
       }
       else if (action === "enable-auto" || action === "disable-auto") {
@@ -1071,7 +1071,7 @@ function handlePluginKey(key) {
         if (existsSync(deployedPath)) { try { unlinkSync(deployedPath); } catch {} }
         pluginItems = buildCombinedPluginList();
         if (pcursor >= pluginItems.length) pcursor = Math.max(0, pluginItems.length - 1);
-        flash(pitem.name + " disabled. Restart OpenCode to unload.");
+        flash(pitem.name + " disabled. Restart Claude Code to unload.");
         mode = "list";
       }
       else if (action === "enable-plugin") {

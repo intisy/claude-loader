@@ -958,7 +958,8 @@ function handleProjectKey(key) {
     }
     else if (key === "o") { if (items.length > 0) openProject(items[cursor]); }
     else if (key === "p") { if (items.length > 0) togglePin(cursor); }
-    else if (key === "h") { if (items.length > 0) hideItem(cursor); }
+    else if (key === ".") { cleanup(); outputDir(process.cwd()); process.exit(0); }
+      else if (key === "h") { if (items.length > 0) hideItem(cursor); }
     else if (key === "u") { unhideAll(); }
     else if (key === "c") { mode = "input"; inputBuf = ""; }
     else if (key === "q" || key === "escape") { cleanup(); process.exit(1); }

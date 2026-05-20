@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOME = homedir();
+process.env.HUB_CONFIG_DIR = join(HOME, '.claude');
 const CLAUDE_DIR = join(HOME, ".claude");
 const REPOS_DIR = join(CLAUDE_DIR, "repos");
 
@@ -79,7 +80,7 @@ if (existsSync(proxyScript)) {
 
   const out = openSync(join(HOME, 'proxy-spawn.log'), 'a');
   const err = openSync(join(HOME, 'proxy-spawn.err'), 'a');
-  const child = spawn("bun", ["run", proxyScript], { shell: true,
+  const child = spawn((process.platform === "win32" ? "C:\\\\Users\\\\finn\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\bun\\\\bin\\\\bun.exe" : "bun"), ["run", proxyScript], { windowsHide: true,
     detached: true,
     stdio: ['ignore', out, err]
   });
@@ -101,7 +102,7 @@ try {
   // Pass command line arguments correctly
   const args = process.argv.slice(2);
   
-  spawnSync("bun", ["run", tuiScript, ...args], { stdio: "inherit", shell: true });
+  spawnSync((process.platform === "win32" ? "C:\\\\Users\\\\finn\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\bun\\\\bin\\\\bun.exe" : "bun"), ["run", tuiScript, ...args], { stdio: "inherit" });
   
   if (existsSync(tmpFile)) {
     const targetDir = readFileSync(tmpFile, "utf-8").trim();

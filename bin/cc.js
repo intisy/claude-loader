@@ -9,6 +9,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOME = homedir();
 process.env.HUB_CONFIG_DIR = join(HOME, '.claude');
+process.env.HUB_APP_NAME = 'Claude Code';
+process.env.HUB_CLI_CMD = 'cc';
+process.env.HUB_NPM_PKG = '@anthropic-ai/claude-code';
 const CLAUDE_DIR = join(HOME, ".claude");
 const REPOS_DIR = join(CLAUDE_DIR, "repos");
 
@@ -116,3 +119,4 @@ try {
 } catch (e) {
   console.error("Error running TUI", e);
 }
+

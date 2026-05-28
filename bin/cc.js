@@ -5,7 +5,8 @@ import { join, dirname } from "path";
 import { homedir } from "os";
 import { execSync, spawnSync, spawn } from "child_process";
 import { fileURLToPath } from "url";
-import { syncAccounts, resetRateLimits } from "../core/account-sync.js";
+import accountSync from "../core/account-sync.js";
+const { syncAccounts, resetRateLimits } = accountSync;
 
 // ---------------------------------------------------------------------------
 // TUI-style arrow-key selector (matches tui.js visual style)

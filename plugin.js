@@ -89,9 +89,9 @@ async function installCcCommand() {
 
   // Remove old command format if it exists
   if (process.platform === "win32") {
-    try { import("fs").then(fs => fs.unlinkSync(join(binDir, "cc"))); } catch {}
+    import("fs").then(fs => { try { fs.unlinkSync(join(binDir, "cc")); } catch {} }).catch(()=>{});
   } else {
-    try { import("fs").then(fs => fs.unlinkSync(join(binDir, "cc.cmd"))); } catch {}
+    import("fs").then(fs => { try { fs.unlinkSync(join(binDir, "cc.cmd")); } catch {} }).catch(()=>{});
   }
 }
 

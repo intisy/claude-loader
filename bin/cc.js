@@ -587,7 +587,8 @@ if (firstArg && !firstArg.startsWith('-') && existsSync(firstArg)) {
 
 // Run Plugin Updater
 try {
-  const updaterPath = join(homedir(), ".config", "github", "plugin-updater", "index.js");
+  const configDir = join(homedir(), ".config", "claude");
+  const updaterPath = join(configDir, "plugin", "plugin-updater", "index.js");
   if (existsSync(updaterPath)) {
     const updater = await import("file://" + updaterPath.replace(/\\/g, "/")).then(m => m.default || m);
     if (updater && updater.updatePlugin) {

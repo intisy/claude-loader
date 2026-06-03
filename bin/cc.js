@@ -596,7 +596,7 @@ try {
       
       // Update plugins from plugins.json
       const configDir = join(homedir(), ".config", "claude");
-      const pluginsJsonPath = join(configDir, "plugins.json");
+      const pluginsJsonPath = join(configDir, "config", "plugins.json");
       if (existsSync(pluginsJsonPath)) {
         try {
           const plugins = JSON.parse(readFileSync(pluginsJsonPath, "utf-8"));

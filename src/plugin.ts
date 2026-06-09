@@ -42,66 +42,23 @@ function getAppConfigDir() {
 
 async function runEarlyLaunchHooks(configDir: string) {
   const pluginsJsonPath = join(configDir, "config", "plugins.json");
-  if (!existsSync(pluginsJsonPath)) {
-    writeLog(configDir, "No plugins.json found at " + pluginsJsonPath);
-    return;
+  let gitPlugins: any[] = [];
+  if (existsSync(pluginsJsonPath)) {
+    try {
+      gitPlugins = JSON.parse(readFileSync(pluginsJsonPath, "utf-8"));
+      writeLog(configDir, "Found " + gitPlugins.length + " git plugins in plugins.json");
+    } catch (e) {
+      writeLog(configDir, "Failed to parse plugins.json: " + e, true);
+    }
   }
 
-  let plugins: any[] = [];
   try {
-    plugins = JSON.parse(readFileSync(pluginsJsonPath, "utf-8"));
+    const updater = await import("plugin-updater");
+    writeLog(configDir, "Running plugin-updater earlyLaunch");
+    await updater.earlyLaunch(configDir, gitPlugins);
+    writeLog(configDir, "plugin-updater earlyLaunch complete");
   } catch (e) {
-    writeLog(configDir, "Failed to parse plugins.json: " + e, true);
-    return;
-  }
-
-  writeLog(configDir, "Found " + plugins.length + " plugins in plugins.json");
-
-  for (const plugin of plugins) {
-    if (plugin.enabled === false) continue;
-
-    let mod: any = null;
-    const namesToTry = [plugin.name];
-
-    for (const pName of namesToTry) {
-      try {
-        mod = await import(pName);
-        writeLog(configDir, "Loaded " + pName + " via NPM resolution");
-        break;
-      } catch (e1) {
-        const singleFile = join(configDir, "plugin", `${pName}.js`);
-        if (existsSync(singleFile)) {
-          try {
-            mod = await import("file://" + singleFile.replace(/\\/g, "/"));
-            writeLog(configDir, "Loaded " + pName + " from single-file plugin");
-            break;
-          } catch (e) {}
-        }
-        const dirFile = join(configDir, "plugin", pName, "index.js");
-        if (existsSync(dirFile)) {
-          try {
-            mod = await import("file://" + dirFile.replace(/\\/g, "/"));
-            writeLog(configDir, "Loaded " + pName + " from directory plugin");
-            break;
-          } catch (e) {}
-        }
-      }
-    }
-
-    if (mod) {
-      try {
-        const p = mod.default || mod;
-        if (typeof p.earlyLaunch === "function") {
-          writeLog(configDir, "Running earlyLaunch for " + plugin.name);
-          await p.earlyLaunch(configDir, plugins);
-          writeLog(configDir, "Finished earlyLaunch for " + plugin.name);
-        }
-      } catch (e) {
-        writeLog(configDir, "Failed earlyLaunch for " + plugin.name + ": " + e, true);
-      }
-    } else {
-      writeLog(configDir, "Could not load plugin: " + plugin.name, true);
-    }
+    writeLog(configDir, "plugin-updater not available, skipping updates: " + e);
   }
 }
 

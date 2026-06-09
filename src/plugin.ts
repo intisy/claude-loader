@@ -1,6 +1,7 @@
 ﻿import { existsSync, writeFileSync, mkdirSync, readFileSync, appendFileSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
 import { homedir } from "os";
+import { fileURLToPath } from "url";
 
 const START_TIME = new Date().toISOString().replace(/:/g, "-").split(".")[0];
 
@@ -112,7 +113,8 @@ function installCcWrapper(configDir: string) {
   const binDir = getBinDir();
   if (!existsSync(binDir)) try { mkdirSync(binDir, { recursive: true }); } catch {}
 
-  const binTuiPath = join(configDir, "repos", "claude-loader", "dist", "cc-tui.js");
+  const pluginDir = dirname(fileURLToPath(import.meta.url));
+  const binTuiPath = join(pluginDir, "cc-tui.js");
   if (!existsSync(binTuiPath)) {
     writeLog(configDir, "cc-tui.js not found at " + binTuiPath + ", skipping wrapper install");
     return;
@@ -155,7 +157,7 @@ function installCcWrapper(configDir: string) {
 
 export async function activate() {
   const configDir = getAppConfigDir();
-  writeLog(configDir, "Claude Launcher activating");
+  writeLog(configDir, "Claude Loader activating");
 
   try {
     await runEarlyLaunchHooks(configDir);
@@ -169,7 +171,7 @@ export async function activate() {
     writeLog(configDir, "Failed to install cc wrapper: " + e, true);
   }
 
-  writeLog(configDir, "Claude Launcher activation complete");
+  writeLog(configDir, "Claude Loader activation complete");
   return {};
 }
 

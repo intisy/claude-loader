@@ -292,7 +292,7 @@ installPlugins();
 setupEnv();
 
 // 3a. Start the launcher proxy (thin reverse proxy that routes to plugin backends)
-async function startLauncherProxy() {
+async function startLoaderProxy() {
   const hubProxyScript = join(dirname(fileURLToPath(import.meta.url)), "core", "hub-proxy.js");
   if (!existsSync(hubProxyScript)) return;
 
@@ -344,7 +344,7 @@ async function startLauncherProxy() {
     }
   }
 }
-await startLauncherProxy();
+await startLoaderProxy();
 
 // 3b. Start any plugin daemons declared via claudeHub.daemon
 async function startPluginDaemons() {
@@ -776,7 +776,7 @@ installPlugins();
 setupEnv();
 
 // 3a. Start the launcher proxy (thin reverse proxy that routes to plugin backends)
-async function startLauncherProxy() {
+async function startLoaderProxy() {
   const hubProxyScript = join(dirname(fileURLToPath(import.meta.url)), "core", "hub-proxy.js");
   if (!existsSync(hubProxyScript)) return;
 
@@ -828,7 +828,7 @@ async function startLauncherProxy() {
     }
   }
 }
-await startLauncherProxy();
+await startLoaderProxy();
 
 // 3b. Start any plugin daemons declared via claudeHub.daemon
 async function startPluginDaemons() {
@@ -980,7 +980,7 @@ if (firstArg === "model") {
       req.on("timeout", () => { req.destroy(); reject(new Error("timeout")); });
     });
   } catch (e) {
-    console.log("[\\x1b[31mcc\\x1b[0m] Launcher proxy is not running. Start it with `cc` first.");
+    console.log("[\\x1b[31mcc\\x1b[0m] Loader proxy is not running. Start it with `cc` first.");
     process.exit(1);
   }
 

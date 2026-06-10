@@ -1,6 +1,6 @@
 {
-  "name": "claude-loader",
-  "version": "1.1.1",
+  "name": "claude-code-loader",
+  "version": "1.1.2",
   "description": "TUI launcher and cc shell command for Claude Code.",
   "main": "dist/plugin.js",
   "type": "module",
@@ -8,7 +8,7 @@
   "author": "intisy",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/intisy/claude-loader.git"
+    "url": "git+https://github.com/intisy/claude-code-loader.git"
   },
   "keywords": [
     "claude",

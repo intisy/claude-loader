@@ -9,8 +9,8 @@ let PLUGIN_CONFIG: Record<string, unknown> | null = null;
 function getPluginConfig(configDir: string): Record<string, unknown> {
   if (PLUGIN_CONFIG !== null) return PLUGIN_CONFIG;
   try {
-    const preferred = join(configDir, "config", "claude-loader.json");
-    const fallback  = join(configDir, "claude-loader.json");
+    const preferred = join(configDir, "config", "claude-code-loader.json");
+    const fallback  = join(configDir, "claude-code-loader.json");
     const p = existsSync(preferred) ? preferred : existsSync(fallback) ? fallback : null;
     PLUGIN_CONFIG = p ? JSON.parse(readFileSync(p, "utf-8")) : {};
   } catch { PLUGIN_CONFIG = {}; }
@@ -25,7 +25,7 @@ function writeLog(configDir: string, message: string, isError: boolean = false) 
       const dateStr = date.toISOString().split("T")[0];
       const logsDir = join(configDir, "logs", dateStr);
       if (!existsSync(logsDir)) mkdirSync(logsDir, { recursive: true });
-      const logFile = join(logsDir, `claude-loader-${START_TIME}.log`);
+      const logFile = join(logsDir, `claude-code-loader-${START_TIME}.log`);
       const prefix = isError ? "[ERROR]" : "[INFO]";
       const logMsg = "[" + date.toISOString() + "] " + prefix + " " + message + "\n";
       appendFileSync(logFile, logMsg);
@@ -74,7 +74,7 @@ function installCcWrapper(configDir: string) {
   // when deployed to plugin/, only plugin.js is copied — the built TUI lives in the repos clone
   const tuiCandidates = [
     join(pluginDir, "cc-tui.js"),
-    join(configDir, "repos", "claude-loader", "core", "dist", "tui.js"),
+    join(configDir, "repos", "claude-code-loader", "core", "dist", "tui.js"),
   ];
   const binTuiPath = tuiCandidates.find((p) => existsSync(p));
   if (!binTuiPath) {
@@ -94,6 +94,8 @@ function installCcWrapper(configDir: string) {
     const lines = [
       "#!/usr/bin/env bash",
       'export PATH="$HOME/.bun/bin:$PATH"',
+      'if ! command -v bun &>/dev/null; then exec claude "$@"; fi',
+      `if [ ! -f "${binTuiPath}" ]; then exec claude "$@"; fi`,
       'export CC_OUTPUT="${TEMP:-${TMPDIR:-/tmp}}/cc-dir-$$.txt"',
       `bun run "${binTuiPath}" "$@"`,
       "EXIT=$?",

@@ -119,7 +119,7 @@ function ensureCmdWrapper() {
   }
 
   // The actual source file in the repository we want to execute
-  const repoJsPath = join(HOME, ".claude", "repos", "intisy", "claude-loader", "bin", "cc.js");
+  const repoJsPath = join(HOME, ".claude", "repos", "intisy", "claude-code-loader", "bin", "cc.js");
 
   if (process.platform === "win32") {
     const cmdPath = join(binDir, "cc.cmd");
@@ -247,7 +247,7 @@ function installPlugins() {
   }
 
   // 1. Ensure core hub is present
-  const hub = "intisy/claude-loader";
+  const hub = "intisy/claude-code-loader";
   const hubDir = join(REPOS_DIR, ...hub.split("/"));
   if (!existsSync(hubDir)) {
     console.log(`[\x1b[36mcc\x1b[0m] Installing core: ${hub}...`);
@@ -603,7 +603,7 @@ function ensureCmdWrapper() {
   }
 
   // The actual source file in the repository we want to execute
-  const repoJsPath = join(HOME, ".claude", "repos", "intisy", "claude-loader", "bin", "cc.js");
+  const repoJsPath = join(HOME, ".claude", "repos", "intisy", "claude-code-loader", "bin", "cc.js");
 
   if (process.platform === "win32") {
     const cmdPath = join(binDir, "cc.cmd");
@@ -731,7 +731,7 @@ function installPlugins() {
   }
 
   // 1. Ensure core hub is present
-  const hub = "intisy/claude-loader";
+  const hub = "intisy/claude-code-loader";
   const hubDir = join(REPOS_DIR, ...hub.split("/"));
   if (!existsSync(hubDir)) {
     console.log(`[\x1b[36mcc\x1b[0m] Installing core: ${hub}...`);
@@ -1053,8 +1053,8 @@ try {
         updater.earlyLaunch(configDir);
       }
 
-      // Update claude-loader
-      updater.updatePlugin("claude-loader", "https://github.com/intisy/claude-loader.git");
+      // Update claude-code-loader
+      updater.updatePlugin("claude-code-loader", "https://github.com/intisy/claude-code-loader.git");
       
       // Update plugins from plugins.json
       const pluginsJsonPath = join(configDir, "config", "plugins.json");

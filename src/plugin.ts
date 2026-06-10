@@ -71,9 +71,14 @@ function installCcWrapper(configDir: string) {
   if (!existsSync(binDir)) try { mkdirSync(binDir, { recursive: true }); } catch {}
 
   const pluginDir = dirname(fileURLToPath(import.meta.url));
-  const binTuiPath = join(pluginDir, "cc-tui.js");
-  if (!existsSync(binTuiPath)) {
-    writeLog(configDir, "cc-tui.js not found at " + binTuiPath + ", skipping wrapper install");
+  // when deployed to plugin/, only plugin.js is copied — the built TUI lives in the repos clone
+  const tuiCandidates = [
+    join(pluginDir, "cc-tui.js"),
+    join(configDir, "repos", "claude-loader", "core", "dist", "tui.js"),
+  ];
+  const binTuiPath = tuiCandidates.find((p) => existsSync(p));
+  if (!binTuiPath) {
+    writeLog(configDir, "TUI not found at " + tuiCandidates.join(" or ") + ", skipping wrapper install");
     return;
   }
 

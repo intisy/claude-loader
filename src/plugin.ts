@@ -92,6 +92,8 @@ function installCcWrapper(configDir: string) {
       "set HUB_APP_NAME=Claude Code",
       "set HUB_CLI_CMD=claude",
       "set HUB_NPM_PKG=@anthropic-ai/claude-code",
+      'set "ANTHROPIC_BASE_URL=http://127.0.0.1:34567"',
+      'set "ANTHROPIC_API_KEY=sk-ant-loader-proxy"',
     ];
     for (const candidate of tuiCandidates) {
       cmdLines.push(`if exist "${candidate}" ( bun run "${candidate}" %* & exit /b %errorlevel% )`);
@@ -108,6 +110,12 @@ function installCcWrapper(configDir: string) {
       'export HUB_APP_NAME="Claude Code"',
       'export HUB_CLI_CMD="claude"',
       'export HUB_NPM_PKG="@anthropic-ai/claude-code"',
+      // route through the always-on loader proxy so login/onboarding is skipped;
+      // only when it answers, so a missing proxy never breaks plain cc usage
+      'if curl -sf -o /dev/null --max-time 1 "http://127.0.0.1:34567/health" 2>/dev/null; then',
+      '  export ANTHROPIC_BASE_URL="http://127.0.0.1:34567"',
+      '  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-sk-ant-loader-proxy}"',
+      'fi',
       'TUI=""',
       "for candidate in \\",
       ...tuiCandidates.map((candidate, index) =>

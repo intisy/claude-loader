@@ -25,6 +25,14 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "claudeHub": {
+    "daemon": {
+      "script": "core/dist/proxy.js",
+      "runtime": "bun",
+      "port": 34567,
+      "healthCheckUrl": "http://127.0.0.1:34567/health"
+    }
+  },
   "scripts": {
     "build": "npx tsc --project core/tsconfig.json && npx tsc",
     "prepublishOnly": "npm run build",

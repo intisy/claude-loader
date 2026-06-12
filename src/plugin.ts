@@ -65,7 +65,9 @@ function installCcWrapper(configDir: string) {
   if (!existsSync(binDir)) try { mkdirSync(binDir, { recursive: true }); } catch {}
 
   const pluginDir = dirname(fileURLToPath(import.meta.url));
-  const extPath = join(pluginDir, "tui-extension.js");
+  // the built extension lives in the repo clone's dist/, not where the deployed
+  // plugin.js runs from — resolve it from the same base as the TUI candidate
+  const extPath = join(configDir, "repos", "claude-code-loader", "dist", "tui-extension.js");
   const tuiCandidates = [
     join(configDir, "repos", "claude-code-loader", "core", "dist", "tui.js"),
   ];

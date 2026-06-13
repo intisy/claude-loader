@@ -65,6 +65,8 @@ function installCcWrapper(configDir: string) {
   if (!existsSync(binDir)) try { mkdirSync(binDir, { recursive: true }); } catch {}
 
   const pluginDir = dirname(fileURLToPath(import.meta.url));
+  // the custom Providers/model-mapping tab; runs from the repo clone's dist/
+  const extPath = join(configDir, "repos", "claude-code-loader", "dist", "tui-extension.js");
   const tuiCandidates = [
     join(configDir, "repos", "claude-code-loader", "core", "dist", "tui.js"),
   ];
@@ -79,11 +81,12 @@ function installCcWrapper(configDir: string) {
       "set HUB_APP_NAME=Claude Code",
       "set HUB_CLI_CMD=claude",
       "set HUB_NPM_PKG=@anthropic-ai/claude-code",
+      `set "HUB_TUI_EXTENSION=${extPath}"`,
       'set "ANTHROPIC_BASE_URL=http://127.0.0.1:34567"',
       'set "ANTHROPIC_API_KEY=sk-ant-loader-proxy"',
       'set "_args=%*"',
       // `cc auth ...` opens the Provider tab instead of forwarding to claude
-      'if "%1"=="auth" ( set "HUB_OPEN_TAB=provider" & set "_args=" )',
+      'if "%1"=="auth" ( set "HUB_OPEN_TAB=providers" & set "_args=" )',
     ];
     for (const candidate of tuiCandidates) {
       cmdLines.push(`if exist "${candidate}" ( bun run "${candidate}" %_args% & exit /b %errorlevel% )`);
@@ -100,6 +103,7 @@ function installCcWrapper(configDir: string) {
       'export HUB_APP_NAME="Claude Code"',
       'export HUB_CLI_CMD="claude"',
       'export HUB_NPM_PKG="@anthropic-ai/claude-code"',
+      `export HUB_TUI_EXTENSION="${extPath}"`,
       // route through the always-on loader proxy so login/onboarding is skipped;
       // only when it answers, so a missing proxy never breaks plain cc usage
       'if curl -sf -o /dev/null --max-time 1 "http://127.0.0.1:34567/health" 2>/dev/null; then',
@@ -114,7 +118,7 @@ function installCcWrapper(configDir: string) {
       "done",
       'if [ -z "$TUI" ] || ! command -v bun >/dev/null 2>&1; then exec claude "$@"; fi',
       // `cc auth ...` opens the Provider tab instead of forwarding to claude
-      'if [ "$1" = "auth" ]; then export HUB_OPEN_TAB="provider"; set --; fi',
+      'if [ "$1" = "auth" ]; then export HUB_OPEN_TAB="providers"; set --; fi',
       'export CC_OUTPUT="${TEMP:-${TMPDIR:-/tmp}}/cc-dir-$$.txt"',
       'bun run "$TUI" "$@"',
       "EXIT=$?",

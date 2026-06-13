@@ -1,10 +1,7 @@
 #!/usr/bin/env bun
 // @ts-nocheck
-// Always-on router proxy: a single stable endpoint the `cc` wrapper points
-// ANTHROPIC_BASE_URL at, so login is skipped and the target never changes.
-// Each request is dispatched to the active provider plugin's handler module,
-// discovered from repos/ by its claudeHub.authProviders[{name, handler}]
-// manifest. With no provider selected it answers 503.
+// Always-on proxy the `cc` wrapper points ANTHROPIC_BASE_URL at; dispatches each
+// request to the active provider's handler module discovered from repos/.
 
 import { existsSync, readFileSync, mkdirSync, appendFileSync, readdirSync } from "fs";
 import { join } from "path";
@@ -38,14 +35,21 @@ function activeProvider() {
   return loaderConfig().provider || "";
 }
 
-// map Claude's requested model id to the active provider's model, per the
-// assignment the user makes in the cc TUI Providers tab (stored in the loader
-// config as modelMap[provider][claudeModel]); "default" backs unmapped models.
+function claudeSlot(model) {
+  const m = (model || "").toLowerCase();
+  if (m.indexOf("opus") >= 0) return "opus";
+  if (m.indexOf("sonnet") >= 0) return "sonnet";
+  if (m.indexOf("haiku") >= 0) return "haiku";
+  return "default";
+}
+
+// map Claude's requested model to the active provider's model via the cc
+// Providers tab assignment (modelMap[provider][slot])
 async function resolveModel(provider, request) {
   let requested = "";
   try { requested = ((await request.clone().json()) || {}).model || ""; } catch {}
   const map = (loaderConfig().modelMap || {})[provider] || {};
-  return map[requested] || map["default"] || requested;
+  return map[claudeSlot(requested)] || map[requested] || map["default"] || requested;
 }
 
 // resolve the handler module a provider plugin declares, by scanning manifests

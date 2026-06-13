@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 // @ts-nocheck
-// Always-on proxy the `cc` wrapper points ANTHROPIC_BASE_URL at; dispatches each
-// request to the active provider's handler module discovered from repos/.
+// Always-on proxy the `cc` wrapper points ANTHROPIC_BASE_URL at; routes each
+// request to the {provider, model} assigned to its Claude tier (opus/sonnet/haiku)
+// in the loader config, discovered from repos/ via claudeHub.authProviders.
 
 import { existsSync, readFileSync, mkdirSync, appendFileSync, readdirSync } from "fs";
 import { join } from "path";
@@ -25,14 +26,8 @@ function log(message) {
 }
 
 function loaderConfig() {
-  try {
-    if (existsSync(LOADER_CONFIG)) return JSON.parse(readFileSync(LOADER_CONFIG, "utf8"));
-  } catch {}
+  try { if (existsSync(LOADER_CONFIG)) return JSON.parse(readFileSync(LOADER_CONFIG, "utf8")); } catch {}
   return {};
-}
-
-function activeProvider() {
-  return loaderConfig().provider || "";
 }
 
 function claudeSlot(model) {
@@ -43,16 +38,14 @@ function claudeSlot(model) {
   return "default";
 }
 
-// map Claude's requested model to the active provider's model via the cc
-// Providers tab assignment (modelMap[provider][slot])
-async function resolveModel(provider, request) {
+// the {provider, model} the cc Providers tab assigned to the request's Claude tier
+async function resolveAssignment(request) {
   let requested = "";
   try { requested = ((await request.clone().json()) || {}).model || ""; } catch {}
-  const map = (loaderConfig().modelMap || {})[provider] || {};
-  return map[claudeSlot(requested)] || map[requested] || map["default"] || requested;
+  const map = loaderConfig().modelMap || {};
+  return map[claudeSlot(requested)] || map.default || null;
 }
 
-// resolve the handler module a provider plugin declares, by scanning manifests
 let HANDLER_CACHE = {};
 function resolveHandler(providerName) {
   if (HANDLER_CACHE[providerName] !== undefined) return HANDLER_CACHE[providerName];
@@ -63,10 +56,7 @@ function resolveHandler(providerName) {
         const pkg = JSON.parse(readFileSync(join(REPOS_DIR, repo, "package.json"), "utf8"));
         const declared = (pkg.claudeHub && pkg.claudeHub.authProviders) || pkg.authProviders || [];
         const match = declared.find((p) => (p.name || repo) === providerName);
-        if (match && match.handler) {
-          resolved = join(REPOS_DIR, repo, match.handler);
-          break;
-        }
+        if (match && match.handler) { resolved = join(REPOS_DIR, repo, match.handler); break; }
       } catch {}
     }
   } catch {}
@@ -85,31 +75,23 @@ async function route(request) {
   const url = new URL(request.url);
   if (url.pathname === "/health") return new Response("ok", { status: 200 });
 
-  const provider = activeProvider();
-  if (!provider) {
-    return errorResponse(503, "No AI provider selected. Run the loader (cc) -> Plugins -> Providers to choose one.");
+  const assigned = await resolveAssignment(request);
+  if (!assigned || !assigned.provider) {
+    return errorResponse(503, "No provider/model assigned for this Claude tier. Run cc auth -> Providers.");
   }
-
-  const handlerPath = resolveHandler(provider);
+  const handlerPath = resolveHandler(assigned.provider);
   if (!handlerPath || !existsSync(handlerPath)) {
-    return errorResponse(503, "Provider '" + provider + "' has no proxy handler installed.");
+    return errorResponse(503, "Provider '" + assigned.provider + "' has no proxy handler installed.");
   }
-
   try {
     const mod = await import(handlerPath);
-    if (typeof mod.handle !== "function") return errorResponse(500, "Provider '" + provider + "' handler exports no handle()");
-    const model = await resolveModel(provider, request);
-    return await mod.handle(request, { configDir: CONFIG_DIR, log, model });
+    if (typeof mod.handle !== "function") return errorResponse(500, "Provider '" + assigned.provider + "' handler exports no handle()");
+    return await mod.handle(request, { configDir: CONFIG_DIR, log, model: assigned.model });
   } catch (e) {
-    log("handler error for " + provider + ": " + (e && e.message));
+    log("handler error for " + assigned.provider + ": " + (e && e.message));
     return errorResponse(502, "Provider handler failed: " + (e && e.message));
   }
 }
 
 log("Loader proxy listening on 127.0.0.1:" + PORT);
-Bun.serve({
-  port: PORT,
-  hostname: "127.0.0.1",
-  idleTimeout: 0,
-  fetch: route,
-});
+Bun.serve({ port: PORT, hostname: "127.0.0.1", idleTimeout: 0, fetch: route });

@@ -27,11 +27,25 @@ function log(message) {
   } catch {}
 }
 
-function activeProvider() {
+function loaderConfig() {
   try {
-    if (existsSync(LOADER_CONFIG)) return JSON.parse(readFileSync(LOADER_CONFIG, "utf8")).provider || "";
+    if (existsSync(LOADER_CONFIG)) return JSON.parse(readFileSync(LOADER_CONFIG, "utf8"));
   } catch {}
-  return "";
+  return {};
+}
+
+function activeProvider() {
+  return loaderConfig().provider || "";
+}
+
+// map Claude's requested model id to the active provider's model, per the
+// assignment the user makes in the cc TUI Providers tab (stored in the loader
+// config as modelMap[provider][claudeModel]); "default" backs unmapped models.
+async function resolveModel(provider, request) {
+  let requested = "";
+  try { requested = ((await request.clone().json()) || {}).model || ""; } catch {}
+  const map = (loaderConfig().modelMap || {})[provider] || {};
+  return map[requested] || map["default"] || requested;
 }
 
 // resolve the handler module a provider plugin declares, by scanning manifests
@@ -80,7 +94,8 @@ async function route(request) {
   try {
     const mod = await import(handlerPath);
     if (typeof mod.handle !== "function") return errorResponse(500, "Provider '" + provider + "' handler exports no handle()");
-    return await mod.handle(request, { configDir: CONFIG_DIR, log });
+    const model = await resolveModel(provider, request);
+    return await mod.handle(request, { configDir: CONFIG_DIR, log, model });
   } catch (e) {
     log("handler error for " + provider + ": " + (e && e.message));
     return errorResponse(502, "Provider handler failed: " + (e && e.message));
